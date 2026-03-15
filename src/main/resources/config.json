@@ -10,17 +10,17 @@
     "messages": {
       "incidentStart": {
         "title": "🚨 Incident Detected",
-        "description": "An incident has been detected for endpoint **{endpointName}** ({endpointUrl}).",
+        "description": "An incident has been detected!",
         "color": "E74C3C"
       },
       "incidentRecovered": {
         "title": "✅ Incident Recovered",
-        "description": "The incident for endpoint **{endpointName}** has been recovered.",
+        "description": "Previous incident for endpoint has been recovered.",
         "color": "2ECC71"
       },
       "slowResponse": {
         "title": "⚠️ Slow Response Detected",
-        "description": "Slow response on **{endpointName}** ({endpointUrl}).",
+        "description": "Slow response detected on **{endpointName}**.",
         "color": "F39C12"
       }
     }
