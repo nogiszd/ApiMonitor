@@ -1,0 +1,51 @@
+{
+  "intervalSeconds": 10,
+  "timeoutSeconds": 5,
+  "incidentFailureThreshold": 3,
+  "incidentRecoverySuccessThreshold": 2,
+  "metricsWindowSeconds": 60,
+  "discord": {
+    "enabled": true,
+    "webhookUrl": "https://discord.com/api/webhooks/1482823680760217611/MQbKHboo0CPRTy71T1yZcbugWiUBpDtui783Lv8swzb9iZPpasxr6LIlFRB0PAEwWSzd",
+    "messages": {
+      "incidentStart": {
+        "title": "🚨 Incident Detected",
+        "description": "An incident has been detected for endpoint **{endpointName}** ({endpointUrl}).",
+        "color": "E74C3C"
+      },
+      "incidentRecovered": {
+        "title": "✅ Incident Recovered",
+        "description": "The incident for endpoint **{endpointName}** has been recovered.",
+        "color": "2ECC71"
+      },
+      "slowResponse": {
+        "title": "⚠️ Slow Response Detected",
+        "description": "Slow response on **{endpointName}** ({endpointUrl}).",
+        "color": "F39C12"
+      }
+    }
+  },
+  "endpoints": [
+    {
+      "id": "google",
+      "name": "Google",
+      "url": "https://www.google.com",
+      "method": "GET",
+      "expectedStatusCodes": [
+        200
+      ],
+      "slowThresholdMs": 1000
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "url": "https://www.github.com",
+      "method": "GET",
+      "expectedStatusCodes": [
+        200,
+        301
+      ],
+      "slowThresholdMs": 1500
+    }
+  ]
+}
