@@ -5,6 +5,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,6 +43,11 @@ public class ConfigLoader {
         } catch (Exception e) {
             throw new RuntimeException("Failed to load config.json", e);
         }
+    }
+
+    public void save(AppConfig config) throws IOException {
+        String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(config);
+        Files.writeString(externalConfigPath, json, StandardCharsets.UTF_8);
     }
 
     public record ConfigSnapshot(AppConfig config, String rawJson) {
