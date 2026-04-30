@@ -21,6 +21,7 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +47,7 @@ public class HostsView extends VerticalLayout {
         setPadding(true);
 
         H2 header = new H2("Manage Hosts");
+        header.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
         Button addButton = new Button("Add Host", e -> openEditDialog(null));
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 

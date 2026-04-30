@@ -12,6 +12,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -36,7 +37,9 @@ public class DashboardView extends VerticalLayout {
         setSizeFull();
         setPadding(true);
 
-        add(new H2("Endpoint Status"));
+        H2 heading = new H2("Endpoint Status");
+        heading.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE, LumoUtility.Margin.Bottom.SMALL);
+        add(heading);
         configureGrid();
         add(grid);
         refreshGrid();
