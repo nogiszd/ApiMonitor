@@ -5,11 +5,14 @@ import com.dawmaz.apimonitor.config.EndpointConfig;
 import com.dawmaz.apimonitor.model.EndpointStatus;
 import com.dawmaz.apimonitor.service.EndpointStatusService;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.i18n.LocaleChangeEvent;
+import com.vaadin.flow.i18n.LocaleChangeObserver;
+import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -19,16 +22,24 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
-@PageTitle("Dashboard | API Monitor")
 @Route(value = "", layout = MainLayout.class)
-public class DashboardView extends VerticalLayout {
+public class DashboardView extends VerticalLayout implements LocaleChangeObserver, HasDynamicTitle {
 
     private static final DateTimeFormatter TIME_FMT =
             DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
 
     private final EndpointStatusService statusService;
     private final ConfigStateService configStateService;
+    private final H2 heading = new H2();
     private final Grid<EndpointStatusRow> grid = new Grid<>();
+
+    private Grid.Column<EndpointStatusRow> nameColumn;
+    private Grid.Column<EndpointStatusRow> urlColumn;
+    private Grid.Column<EndpointStatusRow> statusColumn;
+    private Grid.Column<EndpointStatusRow> responseTimeColumn;
+    private Grid.Column<EndpointStatusRow> httpCodeColumn;
+    private Grid.Column<EndpointStatusRow> lastCheckedColumn;
+    private Grid.Column<EndpointStatusRow> errorColumn;
 
     public DashboardView(EndpointStatusService statusService, ConfigStateService configStateService) {
         this.statusService = statusService;
@@ -37,7 +48,6 @@ public class DashboardView extends VerticalLayout {
         setSizeFull();
         setPadding(true);
 
-        H2 heading = new H2("Endpoint Status");
         heading.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE, LumoUtility.Margin.Bottom.SMALL);
         add(heading);
         configureGrid();
@@ -47,20 +57,31 @@ public class DashboardView extends VerticalLayout {
 
     private void configureGrid() {
         grid.setSizeFull();
-        grid.addColumn(EndpointStatusRow::name)
-                .setHeader("Name").setAutoWidth(true).setSortable(true);
-        grid.addColumn(EndpointStatusRow::url)
-                .setHeader("URL").setFlexGrow(1).setSortable(true);
-        grid.addComponentColumn(row -> createStatusBadge(row.status()))
-                .setHeader("Status").setAutoWidth(true).setSortable(false);
-        grid.addColumn(row -> row.responseTimeMs() > 0 ? row.responseTimeMs() + " ms" : "—")
-                .setHeader("Response Time").setAutoWidth(true).setSortable(true);
-        grid.addColumn(row -> row.statusCode() > 0 ? String.valueOf(row.statusCode()) : "—")
-                .setHeader("HTTP Code").setAutoWidth(true);
-        grid.addColumn(row -> row.lastChecked() != null ? TIME_FMT.format(row.lastChecked()) : "—")
-                .setHeader("Last Checked").setAutoWidth(true);
-        grid.addColumn(row -> row.errorMessage() != null ? row.errorMessage() : "—")
-                .setHeader("Error").setFlexGrow(1);
+        nameColumn = grid.addColumn(EndpointStatusRow::name).setAutoWidth(true).setSortable(true);
+        urlColumn = grid.addColumn(EndpointStatusRow::url).setFlexGrow(1).setSortable(true);
+        statusColumn = grid.addComponentColumn(row -> createStatusBadge(row.status())).setAutoWidth(true).setSortable(false);
+        responseTimeColumn = grid.addColumn(row -> row.responseTimeMs() > 0 ? row.responseTimeMs() + " ms" : "—").setAutoWidth(true).setSortable(true);
+        httpCodeColumn = grid.addColumn(row -> row.statusCode() > 0 ? String.valueOf(row.statusCode()) : "—").setAutoWidth(true);
+        lastCheckedColumn = grid.addColumn(row -> row.lastChecked() != null ? TIME_FMT.format(row.lastChecked()) : "—").setAutoWidth(true);
+        errorColumn = grid.addColumn(row -> row.errorMessage() != null ? row.errorMessage() : "—").setFlexGrow(1);
+    }
+
+    @Override
+    public String getPageTitle() {
+        return getTranslation("nav.dashboard") + " | API Monitor";
+    }
+
+    @Override
+    public void localeChange(LocaleChangeEvent event) {
+        UI.getCurrent().getPage().setTitle(getPageTitle());
+        heading.setText(getTranslation("dashboard.title"));
+        nameColumn.setHeader(getTranslation("dashboard.col.name"));
+        urlColumn.setHeader(getTranslation("dashboard.col.url"));
+        statusColumn.setHeader(getTranslation("dashboard.col.status"));
+        responseTimeColumn.setHeader(getTranslation("dashboard.col.responseTime"));
+        httpCodeColumn.setHeader(getTranslation("dashboard.col.httpCode"));
+        lastCheckedColumn.setHeader(getTranslation("dashboard.col.lastChecked"));
+        errorColumn.setHeader(getTranslation("dashboard.col.error"));
     }
 
     private void refreshGrid() {
@@ -93,14 +114,10 @@ public class DashboardView extends VerticalLayout {
                 .set("font-weight", "bold")
                 .set("letter-spacing", "0.05em");
         switch (status) {
-            case UP -> badge.getStyle()
-                    .set("background-color", "#d4edda").set("color", "#155724");
-            case DOWN -> badge.getStyle()
-                    .set("background-color", "#f8d7da").set("color", "#721c24");
-            case SLOW -> badge.getStyle()
-                    .set("background-color", "#fff3cd").set("color", "#856404");
-            default -> badge.getStyle()
-                    .set("background-color", "#e2e3e5").set("color", "#383d41");
+            case UP -> badge.getStyle().set("background-color", "#d4edda").set("color", "#155724");
+            case DOWN -> badge.getStyle().set("background-color", "#f8d7da").set("color", "#721c24");
+            case SLOW -> badge.getStyle().set("background-color", "#fff3cd").set("color", "#856404");
+            default -> badge.getStyle().set("background-color", "#e2e3e5").set("color", "#383d41");
         }
         return badge;
     }
