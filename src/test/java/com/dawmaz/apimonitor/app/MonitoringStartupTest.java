@@ -7,6 +7,7 @@ import com.dawmaz.apimonitor.event.EventBus;
 import com.dawmaz.apimonitor.service.DiscordAlertService;
 import com.dawmaz.apimonitor.service.DomainSchedulerService;
 import com.dawmaz.apimonitor.service.IncidentStateService;
+import com.dawmaz.apimonitor.service.MetricsStore;
 import com.dawmaz.apimonitor.service.SchedulerService;
 import com.dawmaz.apimonitor.service.SmtpService;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ class MonitoringStartupTest {
         DiscordAlertService discordAlertService = mock(DiscordAlertService.class);
         SmtpService smtpService = mock(SmtpService.class);
         IncidentStateService incidentStateService = mock(IncidentStateService.class);
+        MetricsStore metricsStore = mock(MetricsStore.class);
         EventBus eventBus = new EventBus();
 
         AppConfig appConfig = new AppConfig(
@@ -58,7 +60,8 @@ class MonitoringStartupTest {
                 eventBus,
                 discordAlertService,
                 smtpService,
-                incidentStateService
+                incidentStateService,
+                metricsStore
         );
 
         startup.run();

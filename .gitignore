@@ -32,7 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 .claude/
+
+### Vaadin ###
 node_modules
-src/main/frontend
-!src/main/frontend/themes/**
+src/main/frontend/*
+!src/main/frontend/**/themes/
 src/main/bundles

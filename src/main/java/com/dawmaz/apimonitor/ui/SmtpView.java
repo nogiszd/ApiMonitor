@@ -264,7 +264,8 @@ public class SmtpView extends VerticalLayout implements LocaleChangeObserver, Ha
                     .set("padding", "var(--lumo-space-m)")
                     .set("background-color", "var(--lumo-base-color)")
                     .set("min-height", "8em")
-                    .set("overflow", "auto");
+                    .set("overflow", "auto")
+                    .set("box-sizing", "border-box");
 
             FormLayout form = new FormLayout(subjectField, bodyField);
             form.setColspan(subjectField, 2);
