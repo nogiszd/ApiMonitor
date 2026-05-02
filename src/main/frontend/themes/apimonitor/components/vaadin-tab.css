@@ -1,0 +1,4 @@
+:host::before,
+:host::after {
+    width: 100% !important
+}

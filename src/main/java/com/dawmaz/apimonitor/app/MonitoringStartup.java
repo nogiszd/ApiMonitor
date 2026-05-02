@@ -3,9 +3,14 @@ package com.dawmaz.apimonitor.app;
 import com.dawmaz.apimonitor.config.AppConfig;
 import com.dawmaz.apimonitor.config.ConfigStateService;
 import com.dawmaz.apimonitor.event.*;
+import com.dawmaz.apimonitor.model.MetricsSnapshot;
+import com.dawmaz.apimonitor.model.MetricsSnapshot.EndpointMetrics;
 import com.dawmaz.apimonitor.service.DiscordAlertService;
+import com.dawmaz.apimonitor.service.DomainSchedulerService;
 import com.dawmaz.apimonitor.service.IncidentStateService;
+import com.dawmaz.apimonitor.service.MetricsStore;
 import com.dawmaz.apimonitor.service.SchedulerService;
+import com.dawmaz.apimonitor.service.SmtpService;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +23,9 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
@@ -28,22 +35,31 @@ public class MonitoringStartup implements CommandLineRunner {
 
     private final ConfigStateService configStateService;
     private final SchedulerService schedulerService;
+    private final DomainSchedulerService domainSchedulerService;
     private final EventBus eventBus;
     private final DiscordAlertService discordAlertService;
+    private final SmtpService smtpService;
     private final IncidentStateService incidentStateService;
+    private final MetricsStore metricsStore;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final List<Disposable> subscriptions = new ArrayList<>();
 
     public MonitoringStartup(ConfigStateService configStateService,
                              SchedulerService schedulerService,
+                             DomainSchedulerService domainSchedulerService,
                              EventBus eventBus,
                              DiscordAlertService discordAlertService,
-                             IncidentStateService incidentStateService) {
+                             SmtpService smtpService,
+                             IncidentStateService incidentStateService,
+                             MetricsStore metricsStore) {
         this.configStateService = configStateService;
         this.schedulerService = schedulerService;
+        this.domainSchedulerService = domainSchedulerService;
         this.eventBus = eventBus;
         this.discordAlertService = discordAlertService;
+        this.smtpService = smtpService;
         this.incidentStateService = incidentStateService;
+        this.metricsStore = metricsStore;
     }
 
     @Override
@@ -58,11 +74,14 @@ public class MonitoringStartup implements CommandLineRunner {
         subscriptions.add(startSlowResponseStream());
         subscriptions.add(startIncidentStateStream());
         subscriptions.add(startAlertStream());
+        subscriptions.add(startDomainExpirationStream());
         subscriptions.add(startDiscordWebhookStream());
+        subscriptions.add(startSmtpStream());
         subscriptions.add(startMetricsStream(config));
 
         subscriptions.add(configStateService.startLiveReload());
         subscriptions.add(schedulerService.start(configStateService));
+        subscriptions.add(domainSchedulerService.start(configStateService));
 
         log.info("[SYSTEM] Monitoring started for {} endpoints.", config.endpoints().size());
     }
@@ -144,24 +163,81 @@ public class MonitoringStartup implements CommandLineRunner {
     private Disposable startDiscordWebhookStream() {
         Disposable incidentOpenedSubscription = eventBus.events()
                 .ofType(IncidentOpenedEvent.class)
-                .flatMap(event -> discordAlertService.sendIncidentOpened(configStateService.current().discord(), event))
+                .flatMap(event -> discordAlertService.sendIncidentOpened(configStateService.current(), event))
                 .subscribe();
 
         Disposable incidentRecoveredSubscription = eventBus.events()
                 .ofType(IncidentRecoveredEvent.class)
-                .flatMap(event -> discordAlertService.sendIncidentRecovered(configStateService.current().discord(), event))
+                .flatMap(event -> discordAlertService.sendIncidentRecovered(configStateService.current(), event))
                 .subscribe();
 
         Disposable slowResponseSubscription = eventBus.events()
                 .ofType(SlowResponseDetectedEvent.class)
-                .flatMap(event -> discordAlertService.sendSlowResponse(configStateService.current().discord(), event))
+                .flatMap(event -> discordAlertService.sendSlowResponse(configStateService.current(), event))
+                .subscribe();
+
+        Disposable domainCertificateExpiringSubscription = eventBus.events()
+                .ofType(DomainCertificateExpiringEvent.class)
+                .flatMap(event -> discordAlertService.sendDomainCertificateExpiring(configStateService.current(), event))
+                .subscribe();
+
+        Disposable domainCertificateExpiredSubscription = eventBus.events()
+                .ofType(DomainCertificateExpiredEvent.class)
+                .flatMap(event -> discordAlertService.sendDomainCertificateExpired(configStateService.current(), event))
                 .subscribe();
 
         return () -> {
             incidentOpenedSubscription.dispose();
             incidentRecoveredSubscription.dispose();
             slowResponseSubscription.dispose();
+            domainCertificateExpiringSubscription.dispose();
+            domainCertificateExpiredSubscription.dispose();
         };
+    }
+
+    private Disposable startSmtpStream() {
+        Disposable expiringSubscription = eventBus.events()
+                .ofType(DomainCertificateExpiringEvent.class)
+                .flatMap(event -> smtpService.sendDomainCertificateExpiring(configStateService.current(), event))
+                .subscribe();
+
+        Disposable expiredSubscription = eventBus.events()
+                .ofType(DomainCertificateExpiredEvent.class)
+                .flatMap(event -> smtpService.sendDomainCertificateExpired(configStateService.current(), event))
+                .subscribe();
+
+        return () -> {
+            expiringSubscription.dispose();
+            expiredSubscription.dispose();
+        };
+    }
+
+    private Disposable startDomainExpirationStream() {
+        return eventBus.events()
+                .ofType(DomainCheckCompletedEvent.class)
+                .filter(DomainCheckCompletedEvent::success)
+                .flatMap(e -> {
+                    if (e.daysUntilExpiry() < 0) {
+                        return Mono.just(new DomainCertificateExpiredEvent(
+                                e.domain(),
+                                e.expiresAt(),
+                                -e.daysUntilExpiry(),
+                                e.issuer(),
+                                Instant.now()
+                        ));
+                    }
+                    if (e.daysUntilExpiry() <= e.domain().thresholdDays()) {
+                        return Mono.just(new DomainCertificateExpiringEvent(
+                                e.domain(),
+                                e.expiresAt(),
+                                e.daysUntilExpiry(),
+                                e.issuer(),
+                                Instant.now()
+                        ));
+                    }
+                    return Mono.empty();
+                })
+                .subscribe(eventBus::emit);
     }
 
     private Disposable startMetricsStream(AppConfig config) {
@@ -171,22 +247,37 @@ public class MonitoringStartup implements CommandLineRunner {
                 .flatMap(Flux::collectList)
                 .filter(list -> !list.isEmpty())
                 .subscribe(list -> {
-                    double avg = list.stream()
-                            .mapToLong(CheckCompletedEvent::responseTimeMs)
-                            .average()
-                            .orElse(0.0);
+                    Instant windowEnd = Instant.now();
+                    Instant windowStart = windowEnd.minusSeconds(config.metricsWindowSeconds());
 
-                    long successCount = list.stream().filter(CheckCompletedEvent::success).count();
-                    long failureCount = list.size() - successCount;
+                    Map<String, List<CheckCompletedEvent>> grouped = new HashMap<>();
+                    for (CheckCompletedEvent e : list) {
+                        grouped.computeIfAbsent(e.endpoint().id(), k -> new ArrayList<>()).add(e);
+                    }
 
-                    log.info("[METRICS] window=%ds total=%d success=%d failure=%d avg=%.2f ms"
-                            .formatted(
-                                    config.metricsWindowSeconds(),
-                                    list.size(),
-                                    successCount,
-                                    failureCount,
-                                    avg
-                            ));
+                    Map<String, EndpointMetrics> perEndpoint = new HashMap<>();
+                    for (Map.Entry<String, List<CheckCompletedEvent>> entry : grouped.entrySet()) {
+                        List<CheckCompletedEvent> events = entry.getValue();
+                        long total = events.size();
+                        long success = events.stream().filter(CheckCompletedEvent::success).count();
+                        long failure = total - success;
+                        double avg = events.stream().mapToLong(CheckCompletedEvent::responseTimeMs).average().orElse(0d);
+                        long max = events.stream().mapToLong(CheckCompletedEvent::responseTimeMs).max().orElse(0L);
+                        String name = events.get(0).endpoint().name();
+                        perEndpoint.put(entry.getKey(),
+                                new EndpointMetrics(entry.getKey(), name, total, success, failure, avg, max));
+                    }
+
+                    MetricsSnapshot snapshot = new MetricsSnapshot(
+                            windowStart, windowEnd, config.metricsWindowSeconds(), perEndpoint);
+                    metricsStore.append(snapshot);
+
+                    log.info("[METRICS] window={}s total={} success={} failure={} avg={}ms",
+                            config.metricsWindowSeconds(),
+                            snapshot.totalChecks(),
+                            snapshot.totalSuccess(),
+                            snapshot.totalFailure(),
+                            String.format("%.2f", snapshot.aggregatedAvgResponseTimeMs()));
                 });
     }
 }

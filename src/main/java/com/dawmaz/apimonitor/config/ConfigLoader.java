@@ -3,8 +3,11 @@ package com.dawmaz.apimonitor.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.util.DefaultIndenter;
+import tools.jackson.core.util.DefaultPrettyPrinter;
 import tools.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,6 +45,14 @@ public class ConfigLoader {
         } catch (Exception e) {
             throw new RuntimeException("Failed to load config.json", e);
         }
+    }
+
+    public void save(AppConfig config) throws IOException {
+        DefaultPrettyPrinter printer = new DefaultPrettyPrinter()
+                .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
+                .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+        String json = objectMapper.writer().with(printer).writeValueAsString(config);
+        Files.writeString(externalConfigPath, json, StandardCharsets.UTF_8);
     }
 
     public record ConfigSnapshot(AppConfig config, String rawJson) {
