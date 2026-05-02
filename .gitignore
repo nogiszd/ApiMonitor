@@ -34,4 +34,5 @@ build/
 .claude/
 node_modules
 src/main/frontend
+!src/main/frontend/themes/**
 src/main/bundles

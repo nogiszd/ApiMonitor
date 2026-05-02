@@ -1,51 +1,134 @@
 {
-  "intervalSeconds": 10,
-  "timeoutSeconds": 5,
-  "incidentFailureThreshold": 3,
-  "incidentRecoverySuccessThreshold": 2,
-  "metricsWindowSeconds": 60,
-  "discord": {
-    "enabled": true,
-    "webhookUrl": "https://discord.com/api/webhooks/1482823680760217611/MQbKHboo0CPRTy71T1yZcbugWiUBpDtui783Lv8swzb9iZPpasxr6LIlFRB0PAEwWSzd",
-    "messages": {
-      "incidentStart": {
-        "title": "🚨 Incident Detected",
-        "description": "An incident has been detected!",
-        "color": "E74C3C"
+  "language" : "pl",
+  "intervalSeconds" : 10,
+  "timeoutSeconds" : 5,
+  "incidentFailureThreshold" : 3,
+  "incidentRecoverySuccessThreshold" : 2,
+  "metricsWindowSeconds" : 60,
+  "discord" : {
+    "enabled" : true,
+    "webhookUrl" : "https://discord.com/api/webhooks/1482823680760217611/MQbKHboo0CPRTy71T1yZcbugWiUBpDtui783Lv8swzb9iZPpasxr6LIlFRB0PAEwWSzd",
+    "messages" : {
+      "en" : {
+        "incidentStart" : {
+          "title" : "🚨 Incident Detected",
+          "description" : "An incident has been detected for endpoint **{endpointName}**!",
+          "color" : "E74C3C"
+        },
+        "incidentRecovered" : {
+          "title" : "✅ Incident Recovered",
+          "description" : "Previous incident for endpoint **{endpointName}** has been recovered.",
+          "color" : "2ECC71"
+        },
+        "slowResponse" : {
+          "title" : "⚠️ Slow Response Detected",
+          "description" : "Slow response detected on **{endpointName}**.",
+          "color" : "F39C12"
+        },
+        "domainCertificateExpirationWarning" : {
+          "title" : "⏰ Domain Certificate Expires Soon",
+          "description" : "The SSL certificate for **{domain}** is expiring in {days} days.\nPlease renew it to avoid service disruption.",
+          "color" : "E67E22"
+        },
+        "domainCertificateExpired": {
+          "title": "❌ Domain Certificate Expired",
+          "description": "The SSL certificate for **{domain}** expired {days} days ago.",
+          "color": "C0392B"
+        }
       },
-      "incidentRecovered": {
-        "title": "✅ Incident Recovered",
-        "description": "Previous incident for endpoint has been recovered.",
-        "color": "2ECC71"
-      },
-      "slowResponse": {
-        "title": "⚠️ Slow Response Detected",
-        "description": "Slow response detected on **{endpointName}**.",
-        "color": "F39C12"
+      "pl" : {
+        "incidentStart" : {
+          "title" : "🚨 Wykryto incydent",
+          "description" : "Incydent został wykryty dla endpointu **{endpointName}**!",
+          "color" : "E74C3C"
+        },
+        "incidentRecovered" : {
+          "title" : "✅ Incydent rozwiązany",
+          "description" : "Poprzedni incydent dla endpointu **{endpointName}** został rozwiązany.",
+          "color" : "2ECC71"
+        },
+        "slowResponse" : {
+          "title" : "⚠️ Wykryto wolną odpowiedź",
+          "description" : "Wolna odpowiedź wykryta na endpoincie **{endpointName}**.",
+          "color" : "F39C12"
+        },
+        "domainCertificateExpirationWarning" : {
+          "title" : "⏰ Certyfikat domeny niedługo wygaśnie",
+          "description" : "Certyfikat SSL dla domeny **{domain}** wygasa w ciągu {days} dni.\nProszę o jego odnowienie, aby uniknąć przerw w działaniu usługi.",
+          "color" : "E67E22"
+        },
+        "domainCertificateExpired": {
+          "title": "❌ Certyfikat domeny wygasł",
+          "description": "Certyfikat SSL dla domeny **{domain}** wygasł {days} dni temu.",
+          "color": "C0392B"
+        }
       }
     }
   },
-  "endpoints": [
+  "smtp": {
+    "enabled": false,
+    "host": "smtp.example.com",
+    "port": 587,
+    "username": "",
+    "password": "",
+    "from": "",
+    "templates": {
+      "en": {
+        "domainCertificateExpirationWarning": {
+          "subject": "Domain Certificate Expiration Warning — {domain}",
+          "body": "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background-color:#f4f4f4; font-family: Arial, sans-serif;\"><tr><td align=\"center\" style=\"padding:24px 12px;\"><table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background-color:#ffffff; border-radius:8px; overflow:hidden; max-width:600px;\"><tr><td style=\"background-color:#E67E22; padding:24px; color:#ffffff; font-size:20px; font-weight:bold;\">⏰ Certificate Expiring Soon</td></tr><tr><td style=\"padding:24px; color:#333333; font-size:14px; line-height:1.5;\"><p style=\"margin:0 0 16px 0;\">The SSL certificate for <strong>{domain}</strong> will expire in <strong>{days} days</strong>.</p><table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=\"100%\" style=\"border-collapse:collapse; margin-top:8px;\"><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Domain</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\"><strong>{domain}</strong></td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Days remaining</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\"><strong>{days}</strong></td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Expires on</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\">{expiresAtDate}</td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Issuer</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\">{issuer}</td></tr><tr><td style=\"padding:10px 0; color:#666666;\">Warning threshold</td><td style=\"padding:10px 0; text-align:right;\">{thresholdDays} days</td></tr></table><p style=\"margin:24px 0 0 0; color:#666666; font-size:13px;\">Renew the certificate as soon as possible to avoid service disruption.</p></td></tr><tr><td style=\"background-color:#fafafa; padding:16px 24px; color:#999999; font-size:12px; text-align:center;\">{appName} · {timestamp}</td></tr></table></td></tr></table>"
+        },
+        "domainCertificateExpired": {
+          "subject": "Domain Certificate Expired — {domain}",
+          "body": "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background-color:#f4f4f4; font-family: Arial, sans-serif;\"><tr><td align=\"center\" style=\"padding:24px 12px;\"><table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background-color:#ffffff; border-radius:8px; overflow:hidden; max-width:600px;\"><tr><td style=\"background-color:#C0392B; padding:24px; color:#ffffff; font-size:20px; font-weight:bold;\">❌ Certificate Expired</td></tr><tr><td style=\"padding:24px; color:#333333; font-size:14px; line-height:1.5;\"><p style=\"margin:0 0 16px 0;\">The SSL certificate for <strong>{domain}</strong> expired <strong>{days} days ago</strong>.</p><table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=\"100%\" style=\"border-collapse:collapse; margin-top:8px;\"><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Domain</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\"><strong>{domain}</strong></td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Days since expiry</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\"><strong>{days}</strong></td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Expired on</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\">{expiresAtDate}</td></tr><tr><td style=\"padding:10px 0; color:#666666;\">Issuer</td><td style=\"padding:10px 0; text-align:right;\">{issuer}</td></tr></table><p style=\"margin:24px 0 0 0; color:#C0392B; font-size:13px; font-weight:bold;\">Visitors are likely seeing certificate errors. Renew immediately.</p></td></tr><tr><td style=\"background-color:#fafafa; padding:16px 24px; color:#999999; font-size:12px; text-align:center;\">{appName} · {timestamp}</td></tr></table></td></tr></table>"
+        }
+      },
+      "pl": {
+        "domainCertificateExpirationWarning": {
+          "subject": "Ostrzeżenie o wygasającym certyfikacie domeny — {domain}",
+          "body": "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background-color:#f4f4f4; font-family: Arial, sans-serif;\"><tr><td align=\"center\" style=\"padding:24px 12px;\"><table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background-color:#ffffff; border-radius:8px; overflow:hidden; max-width:600px;\"><tr><td style=\"background-color:#E67E22; padding:24px; color:#ffffff; font-size:20px; font-weight:bold;\">⏰ Certyfikat wygasa wkrótce</td></tr><tr><td style=\"padding:24px; color:#333333; font-size:14px; line-height:1.5;\"><p style=\"margin:0 0 16px 0;\">Certyfikat SSL dla <strong>{domain}</strong> wygaśnie za <strong>{days} dni</strong>.</p><table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=\"100%\" style=\"border-collapse:collapse; margin-top:8px;\"><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Domena</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\"><strong>{domain}</strong></td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Pozostało dni</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\"><strong>{days}</strong></td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Data wygaśnięcia</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\">{expiresAtDate}</td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Wystawca</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\">{issuer}</td></tr><tr><td style=\"padding:10px 0; color:#666666;\">Próg ostrzeżenia</td><td style=\"padding:10px 0; text-align:right;\">{thresholdDays} dni</td></tr></table><p style=\"margin:24px 0 0 0; color:#666666; font-size:13px;\">Odnów certyfikat jak najszybciej, aby uniknąć przerw w działaniu usługi.</p></td></tr><tr><td style=\"background-color:#fafafa; padding:16px 24px; color:#999999; font-size:12px; text-align:center;\">{appName} · {timestamp}</td></tr></table></td></tr></table>"
+        },
+        "domainCertificateExpired": {
+          "subject": "Certyfikat domeny wygasł — {domain}",
+          "body": "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background-color:#f4f4f4; font-family: Arial, sans-serif;\"><tr><td align=\"center\" style=\"padding:24px 12px;\"><table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background-color:#ffffff; border-radius:8px; overflow:hidden; max-width:600px;\"><tr><td style=\"background-color:#C0392B; padding:24px; color:#ffffff; font-size:20px; font-weight:bold;\">❌ Certyfikat wygasł</td></tr><tr><td style=\"padding:24px; color:#333333; font-size:14px; line-height:1.5;\"><p style=\"margin:0 0 16px 0;\">Certyfikat SSL dla <strong>{domain}</strong> wygasł <strong>{days} dni temu</strong>.</p><table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=\"100%\" style=\"border-collapse:collapse; margin-top:8px;\"><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Domena</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\"><strong>{domain}</strong></td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Dni od wygaśnięcia</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\"><strong>{days}</strong></td></tr><tr><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; color:#666666;\">Data wygaśnięcia</td><td style=\"padding:10px 0; border-bottom:1px solid #eeeeee; text-align:right;\">{expiresAtDate}</td></tr><tr><td style=\"padding:10px 0; color:#666666;\">Wystawca</td><td style=\"padding:10px 0; text-align:right;\">{issuer}</td></tr></table><p style=\"margin:24px 0 0 0; color:#C0392B; font-size:13px; font-weight:bold;\">Odwiedzający widzą najpewniej błędy certyfikatu. Odnów go natychmiast.</p></td></tr><tr><td style=\"background-color:#fafafa; padding:16px 24px; color:#999999; font-size:12px; text-align:center;\">{appName} · {timestamp}</td></tr></table></td></tr></table>"
+        }
+      }
+    }
+  },
+  "endpoints" : [
     {
-      "id": "google",
-      "name": "Google",
-      "url": "https://www.google.com",
-      "method": "GET",
-      "expectedStatusCodes": [
+      "id" : "google",
+      "name" : "Google",
+      "url" : "https://www.google.com",
+      "method" : "GET",
+      "expectedStatusCodes" : [
         200
       ],
-      "slowThresholdMs": 1000
+      "slowThresholdMs" : 1000
     },
     {
-      "id": "github",
-      "name": "GitHub",
-      "url": "https://www.github.com",
-      "method": "GET",
-      "expectedStatusCodes": [
+      "id" : "github",
+      "name" : "GitHub",
+      "url" : "https://www.github.com",
+      "method" : "GET",
+      "expectedStatusCodes" : [
         200,
         301
       ],
-      "slowThresholdMs": 1500
+      "slowThresholdMs" : 1500
+    }
+  ],
+  "domains": [
+    {
+      "domain": "google.com",
+      "checkIntervalSeconds": 86400,
+      "warnings": {
+        "expirationThresholdDays": 7,
+        "email": {
+          "enabled": false,
+          "to": ""
+        }
+      }
     }
   ]
 }

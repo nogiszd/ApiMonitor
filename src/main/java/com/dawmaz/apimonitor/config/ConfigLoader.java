@@ -3,6 +3,8 @@ package com.dawmaz.apimonitor.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.util.DefaultIndenter;
+import tools.jackson.core.util.DefaultPrettyPrinter;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -46,7 +48,10 @@ public class ConfigLoader {
     }
 
     public void save(AppConfig config) throws IOException {
-        String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(config);
+        DefaultPrettyPrinter printer = new DefaultPrettyPrinter()
+                .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
+                .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+        String json = objectMapper.writer().with(printer).writeValueAsString(config);
         Files.writeString(externalConfigPath, json, StandardCharsets.UTF_8);
     }
 

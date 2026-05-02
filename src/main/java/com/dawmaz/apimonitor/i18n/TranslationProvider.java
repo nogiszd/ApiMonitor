@@ -18,8 +18,6 @@ public class TranslationProvider implements I18NProvider {
     public static final Locale POLISH = Locale.of("pl");
     public static final List<Locale> LOCALES = List.of(ENGLISH, POLISH);
 
-    // No-fallback control: prevents the JVM's default locale from leaking into
-    // the candidate chain (e.g. en -> pl -> root when default is pl_PL).
     private static final ResourceBundle.Control NO_FALLBACK =
             ResourceBundle.Control.getNoFallbackControl(ResourceBundle.Control.FORMAT_PROPERTIES);
 

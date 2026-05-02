@@ -12,11 +12,13 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.i18n.LocaleChangeEvent;
@@ -40,6 +42,7 @@ public class HostsView extends VerticalLayout implements LocaleChangeObserver, H
     private final ConfigLoader configLoader;
     private final H2 header = new H2();
     private final Button addButton = new Button();
+    private final Button settingsButton = new Button();
     private final Grid<EndpointConfig> grid = new Grid<>();
 
     private Grid.Column<EndpointConfig> idColumn;
@@ -60,8 +63,10 @@ public class HostsView extends VerticalLayout implements LocaleChangeObserver, H
         header.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addButton.addClickListener(e -> openEditDialog(null));
+        settingsButton.setIcon(VaadinIcon.COG.create());
+        settingsButton.addClickListener(e -> openSettingsDialog());
 
-        HorizontalLayout toolbar = new HorizontalLayout(header, addButton);
+        HorizontalLayout toolbar = new HorizontalLayout(header, settingsButton, addButton);
         toolbar.setDefaultVerticalComponentAlignment(Alignment.CENTER);
         toolbar.setWidthFull();
         toolbar.expand(header);
@@ -103,6 +108,7 @@ public class HostsView extends VerticalLayout implements LocaleChangeObserver, H
         UI.getCurrent().getPage().setTitle(getPageTitle());
         header.setText(getTranslation("hosts.title"));
         addButton.setText(getTranslation("hosts.addButton"));
+        settingsButton.setText(getTranslation("hosts.settingsButton"));
         idColumn.setHeader(getTranslation("hosts.col.id"));
         nameColumn.setHeader(getTranslation("hosts.col.name"));
         urlColumn.setHeader(getTranslation("hosts.col.url"));
@@ -248,9 +254,10 @@ public class HostsView extends VerticalLayout implements LocaleChangeObserver, H
         }
 
         writeConfig(new AppConfig(
-                current.intervalSeconds(), current.timeoutSeconds(),
+                current.language(), current.intervalSeconds(), current.timeoutSeconds(),
                 current.incidentFailureThreshold(), current.incidentRecoverySuccessThreshold(),
-                current.metricsWindowSeconds(), current.discord(), endpoints));
+                current.metricsWindowSeconds(), current.discord(), current.smtp(),
+                endpoints, current.domains()));
     }
 
     private void confirmDelete(EndpointConfig ep) {
@@ -270,9 +277,74 @@ public class HostsView extends VerticalLayout implements LocaleChangeObserver, H
                 .filter(e -> !e.id().equals(ep.id()))
                 .collect(Collectors.toCollection(ArrayList::new));
         writeConfig(new AppConfig(
-                current.intervalSeconds(), current.timeoutSeconds(),
+                current.language(), current.intervalSeconds(), current.timeoutSeconds(),
                 current.incidentFailureThreshold(), current.incidentRecoverySuccessThreshold(),
-                current.metricsWindowSeconds(), current.discord(), endpoints));
+                current.metricsWindowSeconds(), current.discord(), current.smtp(),
+                endpoints, current.domains()));
+    }
+
+    private void openSettingsDialog() {
+        AppConfig current = configStateService.current();
+
+        Dialog dialog = new Dialog();
+        dialog.setWidth("480px");
+        dialog.setHeaderTitle(getTranslation("hosts.settings.title"));
+
+        IntegerField intervalField = settingsField("hosts.settings.intervalSeconds", current.intervalSeconds(), 1);
+        IntegerField timeoutField = settingsField("hosts.settings.timeoutSeconds", current.timeoutSeconds(), 1);
+        IntegerField failureField = settingsField("hosts.settings.failureThreshold", current.incidentFailureThreshold(), 1);
+        IntegerField recoveryField = settingsField("hosts.settings.recoveryThreshold", current.incidentRecoverySuccessThreshold(), 1);
+        IntegerField metricsField = settingsField("hosts.settings.metricsWindow", current.metricsWindowSeconds(), 1);
+
+        FormLayout form = new FormLayout(intervalField, timeoutField, failureField, recoveryField, metricsField);
+        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
+
+        Button save = new Button(getTranslation("hosts.button.save"), e -> {
+            String error = validateSettings(intervalField, timeoutField, failureField, recoveryField, metricsField);
+            if (error != null) {
+                showError(error);
+                return;
+            }
+            AppConfig latest = configStateService.current();
+            writeConfig(new AppConfig(
+                    latest.language(),
+                    intervalField.getValue(),
+                    timeoutField.getValue(),
+                    failureField.getValue(),
+                    recoveryField.getValue(),
+                    metricsField.getValue(),
+                    latest.discord(),
+                    latest.smtp(),
+                    latest.endpoints(),
+                    latest.domains()
+            ));
+            dialog.close();
+        });
+        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        Button cancel = new Button(getTranslation("hosts.button.cancel"), e -> dialog.close());
+
+        dialog.add(form);
+        dialog.getFooter().add(cancel, save);
+        dialog.open();
+    }
+
+    private IntegerField settingsField(String labelKey, int initialValue, int min) {
+        IntegerField field = new IntegerField(getTranslation(labelKey));
+        field.setWidthFull();
+        field.setMin(min);
+        field.setStep(1);
+        field.setValue(initialValue);
+        return field;
+    }
+
+    private String validateSettings(IntegerField... fields) {
+        for (IntegerField f : fields) {
+            if (f.getValue() == null || f.getValue() < 1) {
+                return getTranslation("hosts.validate.settingsPositive");
+            }
+        }
+        return null;
     }
 
     private void writeConfig(AppConfig config) {

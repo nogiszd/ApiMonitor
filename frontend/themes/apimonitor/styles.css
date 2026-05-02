@@ -1,0 +1,13 @@
+/* Make Details (collapsible) content fill the available width */
+vaadin-details {
+    width: 100%;
+}
+
+vaadin-details::part(content) {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+vaadin-details::part(summary) {
+    width: 100%;
+}
