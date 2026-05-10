@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 public class DomainSchedulerService {
 
-    private static final Duration CHECK_INTERVAL = Duration.ofHours(1);
+    private static final long DEFAULT_CHECK_INTERVAL_SECONDS = 86400L;
 
     private final EventBus eventBus;
     private final DomainCertificateService domainCertificateService;
@@ -33,15 +33,18 @@ public class DomainSchedulerService {
             return existingSubscription;
         }
 
-        Disposable newSubscription = Flux.interval(Duration.ZERO, CHECK_INTERVAL)
-                .flatMap(tick -> {
-                    AppConfig currentConfig = configStateService.current();
-                    List<DomainConfig> domains = currentConfig.domains();
-                    if (domains == null || domains.isEmpty()) {
-                        return Flux.empty();
-                    }
-                    return Flux.fromIterable(domains)
-                            .flatMap(d -> domainCertificateService.check(d, currentConfig.timeoutSeconds()));
+        AppConfig startupConfig = configStateService.current();
+        List<DomainConfig> domains = startupConfig.domains();
+
+        if (domains == null || domains.isEmpty()) {
+            return Disposables.disposed();
+        }
+
+        Disposable newSubscription = Flux.fromIterable(domains)
+                .flatMap(d -> {
+                    long intervalSeconds = d.checkIntervalSeconds() != null ? d.checkIntervalSeconds() : DEFAULT_CHECK_INTERVAL_SECONDS;
+                    return Flux.interval(Duration.ZERO, Duration.ofSeconds(intervalSeconds))
+                            .flatMap(tick -> domainCertificateService.check(d, configStateService.current().timeoutSeconds()));
                 })
                 .subscribe(eventBus::emit);
 
