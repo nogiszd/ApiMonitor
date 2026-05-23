@@ -7,7 +7,7 @@
   "metricsWindowSeconds" : 60,
   "discord" : {
     "enabled" : true,
-    "webhookUrl" : "https://discord.com/api/webhooks/1482823680760217611/MQbKHboo0CPRTy71T1yZcbugWiUBpDtui783Lv8swzb9iZPpasxr6LIlFRB0PAEwWSzd",
+    "webhookUrl" : "",
     "messages" : {
       "en" : {
         "incidentStart" : {
