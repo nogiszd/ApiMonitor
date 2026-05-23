@@ -33,14 +33,6 @@ public record MetricsSnapshot(
         return weighted / total;
     }
 
-    public double successRatePercent() {
-        long total = totalChecks();
-        if (total == 0) {
-            return 0d;
-        }
-        return (double) totalSuccess() / total * 100d;
-    }
-
     public record EndpointMetrics(
             String endpointId,
             String endpointName,
